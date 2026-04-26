@@ -1,23 +1,29 @@
-name: Keepalive Workflow
+name: Automatic Keepalive
 
 on:
   schedule:
-    - cron: "0 0 1 * *" # Runs once a month
-  workflow_dispatch: # Allows you to run it manually
+    - cron: "0 0 1 * *" # Runs the 1st of every month
+  workflow_dispatch: # Allows you to test it manually
 
 jobs:
-  keepalive:
+  heartbeat:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Keep repository active
+        with:
+          fetch-depth: 0
+
+      - name: Update Heartbeat
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Switch to alive-main or create it if missing
+          git checkout alive-main || git checkout -b alive-main
+          
           echo "Last heartbeat: $(date)" > heartbeat.txt
           git add heartbeat.txt
-          git commit -m "chore: heartbeat to keep actions enabled [skip ci]"
-          git push
+          git commit -m "chore: automated heartbeat [skip ci]" || echo "No changes to commit"
+          git push origin alive-main
